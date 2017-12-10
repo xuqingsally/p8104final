@@ -19,42 +19,57 @@ library(car)
 ```
 #Clean data
 ```{r}
-df<-read_excel("GHProject_Dataset.xlsx") %>%
+GH_data <- read_excel("GHProject_Dataset.xlsx") %>%
   clean_names() %>%
   group_by(patientid) 
 
 #count number of visit and select ICU=0
-mul<-count(df) 
-df<-left_join(df,mul,by = "patientid") %>%
-   filter(icu_flag==0) %>%
+mul <- count(df) 
+GH_data_noICU <- left_join(GH_data,mul,by = "patientid") %>%
+   filter(icu_flag == 0) %>%
    data.table()
 
 #select first visit
-setkey(df, patientid)
-df<-df[J(unique(patientid)), mult = "first"]
+setkey(GH_data_noICU, patientid)
+df <- GH_data_noICU[J(unique(GH_data_noICU)), mult = "first"]
 
-#change temperature lower than 15 to NA
-df[df$temperature < 15] <- NA
-df[df$temperature > 47] <- NA
-df[df$bmi < 7] <-NA
-```
-#transformation boxpox
-```{r}
-ggplot(df,aes(x = losdays2))+
-  geom_histogram()
-
-ggplot(df,aes(x = log(losdays2)))+
-  geom_histogram()
-
-#use log of losdays2
-df<-df %>%
-  mutate(log_los=log(losdays2)) 
-
-```
-
-#combine level
-```{r}
+#
 df$is30dayreadmit=as.character(df$is30dayreadmit)
+```
+
+
+#Check the variables we interested in
+```{r}
+df_check <-
+  df %>%
+  as.tibble() %>%
+  dplyr::select(-c(loshours, admitdtm, icu_flag, postalcode, facilityname, facilityzip)) %>%
+  rename(num_visit = n)
+#the list for checking the potential categorical predictors
+category_check_list <- 
+  df_check %>%
+  dplyr::select(is30dayreadmit, evisit, mews, cindex, gender, race, religion, maritalstatus, insurancetype) %>%
+  apply(2, table)
+names(category_check_list) <- c("is30dayreadmit", "evisit", "mews", "cindex", "gender", "race", "religion", "maritalstatus", "insurancetype")
+#the summary data of potential continous predictors
+df_check %>%
+  dplyr::select(-c(is30dayreadmit, evisit, mews, cindex, gender, race, 
+                   religion, maritalstatus, insurancetype)) %>%
+  dplyr::select(-c(patientid, visitid, losdays2, num_visit)) %>%
+  gather(key = continuous_variable, value = value, ageyear:bpdiastolic) %>%
+  group_by(continuous_variable) %>%
+  summarise(min = min(value, na.rm = T),
+            mean = mean(value, na.rm = T),
+            median = median(value, na.rm = T),
+            max = max(value, na.rm = T))
+
+#we find the following four predictors should be combined
+category_check_list$mews
+category_check_list$cindex
+category_check_list$race
+category_check_list$maritalstatus
+
+#combine the level we choose
 df$mews<-replace(df$mews, df$mews>5, "immediate action required")
 df$mews<-replace(df$mews, df$mews==4|df$mews==5, "further deterioration")
 df$mews<-replace(df$mews, df$mews==2|df$mews==3, "increase caution")
@@ -67,11 +82,26 @@ df$cindex<-replace(df$cindex, df$cindex==5,"severe")
 
 ```
 
+```{r}
+#change temperature lower than 15 to NA
+df[df$temperature < 15] <- NA
+df[df$temperature > 47] <- NA
+df[df$bmi < 7] <-NA
+```
 
+#transformation
+```{r}
+ggplot(df,aes(x = losdays2))+
+  geom_histogram()
 
+ggplot(df,aes(x = log(losdays2)))+
+  geom_histogram()
 
+#use log of losdays2
+df<-df %>%
+  mutate(log_los=log(losdays2)) 
 
-
+```
 
 #variables who are included
 ```{r}
