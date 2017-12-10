@@ -24,7 +24,7 @@ GH_data <- read_excel("GHProject_Dataset.xlsx") %>%
   group_by(patientid) 
 
 #count number of visit and select ICU=0
-mul <- count(df) 
+mul <- count(GH_data) 
 GH_data_noICU <- left_join(GH_data,mul,by = "patientid") %>%
    filter(icu_flag == 0) %>%
    data.table()
@@ -70,14 +70,17 @@ category_check_list$race
 category_check_list$maritalstatus
 
 #combine the level we choose
-df$mews<-replace(df$mews, df$mews>5, "immediate action required")
-df$mews<-replace(df$mews, df$mews==4|df$mews==5, "further deterioration")
-df$mews<-replace(df$mews, df$mews==2|df$mews==3, "increase caution")
 df$mews<-replace(df$mews, df$mews==0|df$mews==1, "normal")
+df$mews<-replace(df$mews, df$mews==2|df$mews==3, "increase caution")
+df$mews<-replace(df$mews, df$mews==4|df$mews==5, "further deterioration")
+df$mews<-replace(df$mews, df$mews>5, "immediate action required")
 df$cindex<-replace(df$cindex, df$cindex==0,"normal")
 df$cindex<-replace(df$cindex, df$cindex==1|df$cindex==2,"mild")
 df$cindex<-replace(df$cindex, df$cindex==3|df$cindex==4,"moderate")
 df$cindex<-replace(df$cindex, df$cindex==5,"severe")
+df$race<-replace(df$race, df$mews=="Hawaii/Pacf Isl", "Other/Multiracial")
+df$maritalstatus<-replace(df$maritalstatus, df$martitalstatus=="Civil Union", " Married")
+
 
 
 ```
