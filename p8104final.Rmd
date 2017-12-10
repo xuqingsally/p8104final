@@ -15,6 +15,7 @@ library(readxl)
 library(data.table)
 library(HH)
 library(leaps)
+library(car)
 ```
 #Clean data
 ```{r}
