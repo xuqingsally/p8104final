@@ -70,17 +70,14 @@ category_check_list$race
 category_check_list$maritalstatus
 
 #combine the level we choose
-df$mews<-replace(df$mews, df$mews==0|df$mews==1, "normal")
-df$mews<-replace(df$mews, df$mews==2|df$mews==3, "increase caution")
-df$mews<-replace(df$mews, df$mews==4|df$mews==5, "further deterioration")
 df$mews<-replace(df$mews, df$mews>5, "immediate action required")
+df$mews<-replace(df$mews, df$mews==4|df$mews==5, "further deterioration")
+df$mews<-replace(df$mews, df$mews==2|df$mews==3, "increase caution")
+df$mews<-replace(df$mews, df$mews==0|df$mews==1, "normal")
 df$cindex<-replace(df$cindex, df$cindex==0,"normal")
 df$cindex<-replace(df$cindex, df$cindex==1|df$cindex==2,"mild")
 df$cindex<-replace(df$cindex, df$cindex==3|df$cindex==4,"moderate")
 df$cindex<-replace(df$cindex, df$cindex==5,"severe")
-df$race<-replace(df$race, df$mews=="Hawaii/Pacf Isl", "Other/Multiracial")
-df$maritalstatus<-replace(df$maritalstatus, df$martitalstatus=="Civil Union", " Married")
-
 
 
 ```
@@ -95,10 +92,10 @@ df[df$bmi < 7] <-NA
 #transformation
 ```{r}
 ggplot(df,aes(x = losdays2))+
-  geom_histogram()
+  geom_histogram(bins = 20)
 
 ggplot(df,aes(x = log(losdays2)))+
-  geom_histogram()
+  geom_histogram(bins = 15)
 
 #use log of losdays2
 df<-df %>%
@@ -121,6 +118,8 @@ lm10<-lm(log_los~factor(insurancetype),data=df) #not sig?
 lm11<-lm(log_los~bmi,data=df)
 lm12<-lm(log_los~mews+temperature+heartrate+respirationrate+bpdiastolic,data=df)
 
+summary(lm12)
+cor(df$mews, df$temperature)
 
 df$is30dayreadmit=as.factor(df$is30dayreadmit)
 mult.fit <- lm(log_los ~ mews+cindex+evisit+ageyear+bmi+is30dayreadmit, data=df)
