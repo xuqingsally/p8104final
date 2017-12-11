@@ -55,7 +55,6 @@ category_check_tbl <- tibble(variable = c("is30dayreadmit", "evisit", "mews", "c
                                           "race", "religion", "maritalstatus", "insurancetype"),
                              check_list = category_check_list)
 
-
 #the summary data of potential continous predictors
 df_check %>%
   dplyr::select(-c(is30dayreadmit, evisit, mews, cindex, gender, race, 
@@ -73,34 +72,21 @@ category_check_tbl$check_list[3]             #mews
 category_check_tbl$check_list[4]             #cindex
 category_check_tbl$check_list[6]             #race
 category_check_tbl$check_list[8]             #maritalstatus
-
-#we find some "funny" variable 
-
-
-
-#combine the level we choose
-df$mews<-replace(df$mews, df$mews>5, "immediate action required")
-df$mews<-replace(df$mews, df$mews==4|df$mews==5, "further deterioration")
-df$mews<-replace(df$mews, df$mews==2|df$mews==3, "increase caution")
-df$mews<-replace(df$mews, df$mews==0|df$mews==1, "normal")
-df$cindex<-replace(df$cindex, df$cindex==0,"normal")
-df$cindex<-replace(df$cindex, df$cindex==1|df$cindex==2,"mild")
-df$cindex<-replace(df$cindex, df$cindex==3|df$cindex==4,"moderate")
-df$cindex<-replace(df$cindex, df$cindex==5,"severe")
-
-df$race<-replace(df$race, df$race=="Natv Hawaii/Pacf Isl","Other/Multiracial")
-df$maritalstatus<-replace(df$maritalstatus, df$maritalstatus=="Civil Union","Married")
-
-
-
-
 ```
 
 ```{r}
-#change temperature lower than 15 to NA
+#combine the level we choose
+df$mews<-replace(df$mews, df$mews>3, "further deterioration/immediate action required")
+df$mews<-replace(df$mews, df$mews<4, "normal/increase caution")
+df$cindex<-replace(df$cindex, df$cindex<3,"normal/mild")
+df$cindex<-replace(df$cindex, df$cindex>2,"moderate/severe")
+df$race<-replace(df$race, df$race=="Natv Hawaii/Pacf Isl","Other/Multiracial")
+df$maritalstatus<-replace(df$maritalstatus, df$maritalstatus=="Civil Union","Married")
+#change temperature and bmi
 df[df$temperature < 24] <- NA
 df[df$temperature > 47] <- NA
-df[df$bmi < 7] <-NA
+df[df$bmi < 7] <- NA
+df[df$bmi > ] <- NA
 ```
 
 #transformation
