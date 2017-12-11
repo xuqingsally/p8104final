@@ -17,6 +17,7 @@ library(HH)
 library(leaps)
 library(car)
 library(gridExtra)
+library(knitr)
 ```
 
 #Clean data
@@ -58,17 +59,19 @@ category_check_tbl <- tibble(variable = c("is30dayreadmit", "evisit", "mews", "c
                              check_list = category_check_list)
 
 #the summary data of potential continous predictors
-df %>%
-  dplyr::select(-c(is30dayreadmit, evisit, mews, cindex, gender, race, 
-                   religion, maritalstatus, insurancetype)) %>%
-  dplyr::select(-c(patientid, visitid, losdays2, num_visit)) %>%
-  gather(key = continuous_variable, value = value, ageyear:bpdiastolic) %>%
-  group_by(continuous_variable) %>%
-  summarise(min = min(value, na.rm = T),
-            first_quantile = quantile(value,  probs = 0.25, na.rm = T),
-            median = median(value, na.rm = T),
-            third_quantile = quantile(value,  probs = 0.75, na.rm = T),
-            max = max(value, na.rm = T))
+data_summary <- 
+  df %>%
+    dplyr::select(-c(is30dayreadmit, evisit, mews, cindex, gender, race, 
+                     religion, maritalstatus, insurancetype)) %>%
+    dplyr::select(-c(patientid, visitid, losdays2, num_visit)) %>%
+    gather(key = continuous_variable, value = value, ageyear:bpdiastolic) %>%
+    group_by(continuous_variable) %>%
+    summarise(min = min(value, na.rm = T),
+              first_quantile = quantile(value,  probs = 0.25, na.rm = T),
+              median = median(value, na.rm = T),
+              third_quantile = quantile(value,  probs = 0.75, na.rm = T),
+              max = max(value, na.rm = T))
+kable(data_summary)
 
 #we find the following four predictors should be combined
 category_check_tbl$check_list[3]             #mews
@@ -146,8 +149,8 @@ lm_o2<-lm(log_los~o2sat,data=df)
 # religion should be discussed
 lm_full<-lm(log_los~mews+is30dayreadmit+cindex+evisit+ageyear+bmi+temperature+heartrate+respirationrate+bpdiastolic+bpsystolic+o2sat,data=df)
 
-
-step(lm_full, direction='both', trace = 0)
+# results from stepwise automatic procedure
+summary(step(lm_full, direction='both', trace = 0))
 
 
 #select
@@ -194,9 +197,35 @@ plot(lm_best_2, which = 1:5)
 #we find that the QQplot become better and R^2 become larger. So we decide to remove the outliers in Y
 ```
 
-#cross validation
-```{r}
 
+
+## Bootstrapping 
+```{r}
+train <- sample(length(df), length(df)/2)
+
+lm_best_train <- lm(log_los ~ is30dayreadmit + cindex + evisit + ageyear + temperature + heartrate + respirationrate + bpdiastolic + bpsystolic,
+                    data = df, 
+                    subset = train)
+
+boot.fn <- function(data, index){
+	return(coef(lm(log_los ~ is30dayreadmit + cindex + evisit + ageyear + temperature + heartrate + respirationrate + bpdiastolic + bpsystolic,
+	               data = df, 
+	               subset = index)))
+}
+
+# repeats sampling 10000 times
+set.seed(1)
+bootstrap_results <- boot(df, boot.fn, 10000)
+
+original <- bootstrap_results$t0
+bias <- mean(bootstrap_results$t) - bootstrap_results$t0
+bootstrap_table <- cbind(original, bias)
+
+bootstrap_results
+
+#bias and original coefficients are output
+kable(bootstrap_table)
 ```
+
 
 
