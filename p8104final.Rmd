@@ -16,6 +16,7 @@ library(data.table)
 library(HH)
 library(leaps)
 library(car)
+library(gridExtra)
 ```
 
 #Clean data
@@ -64,8 +65,9 @@ df %>%
   gather(key = continuous_variable, value = value, ageyear:bpdiastolic) %>%
   group_by(continuous_variable) %>%
   summarise(min = min(value, na.rm = T),
-            mean = mean(value, na.rm = T),
+            first_quantile = quantile(value,  probs = 0.25, na.rm = T),
             median = median(value, na.rm = T),
+            third_quantile = quantile(value,  probs = 0.75, na.rm = T),
             max = max(value, na.rm = T))
 
 #we find the following four predictors should be combined
@@ -87,19 +89,26 @@ df$maritalstatus<-replace(df$maritalstatus, df$maritalstatus=="Civil Union","Mar
 df[df$temperature < 24] <- NA
 df[df$temperature > 47] <- NA
 df[df$bmi < 7] <- NA
-df[df$bmi > ] <- NA
+df[df$bmi > 50] <- NA
+#omit the missing observations
+df <- df %>% na.omit()
 ```
 
 #transformation
 ```{r}
-ggplot(df,aes(x = losdays2))+
-  geom_histogram(bins = 20)
-
-ggplot(df,aes(x = log(losdays2)))+
-  geom_histogram(bins = 15)
-
+#histogram of outcome
+outcome_nontran <- 
+  ggplot(df,aes(x = losdays2))+
+  geom_histogram(bins = 20) +
+  ggtitle("histogram of length of days") + 
+  theme(plot.title = element_text(hjust = 0.5))
+outcome_tran <- ggplot(df,aes(x = log(losdays2)))+
+  geom_histogram(bins = 15) +
+  ggtitle("histogram of log(length of days)") + 
+  theme(plot.title = element_text(hjust = 0.5))
+grid.arrange(outcome_nontran, outcome_tran)
 #use log of losdays2
-df<-df %>%
+df <- df %>%
   mutate(log_los=log(losdays2)) 
 
 ```
