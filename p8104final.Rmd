@@ -37,16 +37,17 @@ GH_data_noICU <- left_join(GH_data,mul,by = "patientid") %>%
 setkey(GH_data_noICU, patientid)
 df <- GH_data_noICU[J(unique(patientid)), mult = "first"]
 
+#select variables we interested
+df <- df %>%
+  dplyr::select(-c(loshours, admitdtm, icu_flag, facilityzip, postalcode, facilityname))
 ```
 
 
 #Check the variables we interested in
 ```{r}
-df_check <- df %>% as.tibble()
-
 #create a list for checking the potential categorical predictors
 category_check_list <- 
-  df_check %>%
+  df %>%
   dplyr::select(is30dayreadmit, evisit, mews, cindex, gender, race, religion, maritalstatus, insurancetype) %>%
   apply(2, table)
 names(category_check_list) <- c("is30dayreadmit", "evisit", "mews", "cindex", "gender", 
@@ -56,7 +57,7 @@ category_check_tbl <- tibble(variable = c("is30dayreadmit", "evisit", "mews", "c
                              check_list = category_check_list)
 
 #the summary data of potential continous predictors
-df_check %>%
+df %>%
   dplyr::select(-c(is30dayreadmit, evisit, mews, cindex, gender, race, 
                    religion, maritalstatus, insurancetype)) %>%
   dplyr::select(-c(patientid, visitid, losdays2, num_visit)) %>%
