@@ -118,7 +118,8 @@ outcome_tran <- ggplot(df,aes(x = log(losdays2)))+
 grid.arrange(outcome_nontran, outcome_tran)
 #use log of losdays2
 df <- df %>%
-  mutate(log_los=log(losdays2)) 
+  mutate(log_los=log(losdays2)) %>%
+  dplyr::select(-patientid,-visitid,-losdays2,-num_visit)
 #Now we have our final data for regression
 ```
 
@@ -169,9 +170,15 @@ round(best(lm_full, nbest = 1), 4) #remove mews, bmi and O2sta based on this out
 lm_best <- lm(log_los~is30dayreadmit+cindex+evisit+ageyear+temperature+heartrate+respirationrate+bpdiastolic+bpsystolic,data=df)
 summary(lm_best)
 #give the diagnostics plots
+par(mfrow=c(2,2))
 plot(lm_best, which = 1:5)
 #check the the 516th, 595th and 1244th observation
 df[c(516, 595, 1244),]
 rstandard(lm_best)[c(516, 595, 1244)]  #they are outliers in Y
+
+
+#check outlier
+stu_res<-rstandard(lm_best)
+outliers_y<-stu_res[abs(stu_res)>2.5]
 ```
 
