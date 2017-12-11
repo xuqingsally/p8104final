@@ -96,9 +96,9 @@ df[df$temperature < 24] <- NA
 df[df$temperature > 47] <- NA
 df[df$bmi < 7] <- NA
 df[df$bmi > 50] <- NA
-df[df$heartrate>220]<- NA
-df[df$o2sat>200]<- NA
-df[df$respirationrate>50]<-NA
+df[df$heartrate > 220] <- NA
+df[df$o2sat > 200] <- NA
+df[df$respirationrate > 50] <- NA
 #omit the missing observations
 df <- df %>% na.omit()
 ```
@@ -135,7 +135,7 @@ lm_religion<-lm(log_los~factor(religion),data=df) #not sig
 lm_maritalstatus<-lm(log_los~factor(maritalstatus),data=df) #not sig
 lm_insurancetype<-lm(log_los~factor(insurancetype),data=df) #not sig?
 lm_bmi<-lm(log_los~bmi,data=df)
-lm_tem<-lm(log_los~temperature,data=df) #not sig
+lm_tem<-lm(log_los~temperature,data=df) #not sig but pvalue is 0.09, still remain
 lm_hear<-lm(log_los~heartrate,data=df)
 lm_res<-lm(log_los~respirationrate,data=df)
 lm_bpd<-lm(log_los~bpdiastolic,data=df)
@@ -170,8 +170,28 @@ lm_best <- lm(log_los~is30dayreadmit+cindex+evisit+ageyear+temperature+heartrate
 summary(lm_best)
 #give the diagnostics plots
 plot(lm_best, which = 1:5)
-#check the the 516th, 595th and 1244th observation
+#check the the 516th, 595th and 1244th observation(patientid:477165, 558208, 1680385)
 df[c(516, 595, 1244),]
-rstandard(lm_best)[c(516, 595, 1244)]  #they are outliers in Y
+#first from the residuals vs leverage plot, we find that they are not outliers in X
+rstandard(lm_best)[c(516, 595, 1244)]  #they are outliers in Y, but their |ri|s are just a bit larger than 2.5
+
+#since the QQplot show that there might be some outliers in Y, we can try to remove and find what happen
+
+#find all the outliers in Y
+outlier_y <- which(abs(rstandard(lm_best)) > 2.5)
+#now we fit the model these points including the three influential cases
+df_rm <- df[-outlier_y,]
+lm_best_2 <- df_rm %>%
+  lm(log_los~is30dayreadmit+cindex+evisit+ageyear+temperature+
+       heartrate+respirationrate+bpdiastolic+bpsystolic,data = .)
+summary(lm_best_2)
+plot(lm_best_2, which = 1:5)
+#we find that the QQplot become better and R^2 become larger. So we decide to remove the outliers in Y
 ```
+
+#cross validation
+```{r}
+
+```
+
 
