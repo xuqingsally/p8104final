@@ -88,12 +88,17 @@ df$cindex<-replace(df$cindex, df$cindex==1|df$cindex==2,"mild")
 df$cindex<-replace(df$cindex, df$cindex==3|df$cindex==4,"moderate")
 df$cindex<-replace(df$cindex, df$cindex==5,"severe")
 
+df$race<-replace(df$race, df$race=="Natv Hawaii/Pacf Isl","Other/Multiracial")
+df$maritalstatus<-replace(df$maritalstatus, df$maritalstatus=="Civil Union","Married")
+
+
+
 
 ```
 
 ```{r}
 #change temperature lower than 15 to NA
-df[df$temperature < 15] <- NA
+df[df$temperature < 24] <- NA
 df[df$temperature > 47] <- NA
 df[df$bmi < 7] <-NA
 ```
@@ -114,21 +119,24 @@ df<-df %>%
 
 #variables who are included
 ```{r}
-lm1<-lm(log_los~factor(is30dayreadmit),data=df) 
-lm2<-lm(log_los~factor(mews),data=df) 
-lm3<-lm(log_los~cindex,data=df)
-lm4<-lm(log_los~evisit,data=df)
-lm5<-lm(log_los~ageyear,data=df)
-lm6<-lm(log_los~factor(gender),data=df) # not sig 
-lm7<-lm(log_los~factor(race),data=df) #not sig
-lm8<-lm(log_los~factor(religion),data=df) #not sig
-lm9<-lm(log_los~factor(maritalstatus),data=df) #not sig
-lm10<-lm(log_los~factor(insurancetype),data=df) #not sig?
-lm11<-lm(log_los~bmi,data=df)
+lm_is<-lm(log_los~factor(is30dayreadmit),data=df) 
+lm_mews<-lm(log_los~factor(mews),data=df) 
+lm_cindex<-lm(log_los~cindex,data=df)
+lm_evisit<-lm(log_los~evisit,data=df)
+lm_ageyear<-lm(log_los~ageyear,data=df)
+lm_gender<-lm(log_los~factor(gender),data=df) # not sig 
+lm_race<-lm(log_los~factor(race),data=df) #not sig
+lm_religion<-lm(log_los~factor(religion),data=df) #not sig
+lm_maritalstatus<-lm(log_los~factor(maritalstatus),data=df) #not sig
+lm_insurancetype<-lm(log_los~factor(insurancetype),data=df) #not sig?
+lm_bmi<-lm(log_los~bmi,data=df)
+
 lm12<-lm(log_los~mews+temperature+heartrate+respirationrate+bpdiastolic+bpsystolic,data=df)
 lm13<-lm(log_los~mews+is30dayreadmit+cindex+evisit+ageyear+bmi+temperature+heartrate+respirationrate+bpdiastolic+bpsystolic,data=df)
 
+
 #step(lm13, direction='backward')
+
 
 #select
 best <- function(model, ...) 
