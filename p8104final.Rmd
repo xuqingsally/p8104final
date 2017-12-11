@@ -17,40 +17,45 @@ library(HH)
 library(leaps)
 library(car)
 ```
+
 #Clean data
 ```{r}
+#clean data and converting some variables
 GH_data <- read_excel("GHProject_Dataset.xlsx") %>%
   clean_names() %>%
-  group_by(patientid) 
+  group_by(patientid) %>%
+  dplyr::mutate(is30dayreadmit = as.character(is30dayreadmit))
 
 #count number of visit and select ICU=0
 mul <- count(GH_data) 
 GH_data_noICU <- left_join(GH_data,mul,by = "patientid") %>%
-   filter(icu_flag == 0) %>%
-   data.table()
+  filter(icu_flag == 0) %>%
+  rename(num_visit = n) %>%
+  data.table()
 
 #select first visit
 setkey(GH_data_noICU, patientid)
-df<-GH_data_noICU[J(unique(patientid)), mult = "first"]
+df <- GH_data_noICU[J(unique(patientid)), mult = "first"]
 
-#
-df$is30dayreadmit=as.character(df$is30dayreadmit)
 ```
 
 
 #Check the variables we interested in
 ```{r}
-df_check <-
-  df %>%
-  as.tibble() %>%
-  dplyr::select(-c(loshours, admitdtm, icu_flag, postalcode, facilityname, facilityzip)) %>%
-  rename(num_visit = n)
-#the list for checking the potential categorical predictors
+df_check <- df %>% as.tibble()
+
+#create a list for checking the potential categorical predictors
 category_check_list <- 
   df_check %>%
   dplyr::select(is30dayreadmit, evisit, mews, cindex, gender, race, religion, maritalstatus, insurancetype) %>%
   apply(2, table)
-names(category_check_list) <- c("is30dayreadmit", "evisit", "mews", "cindex", "gender", "race", "religion", "maritalstatus", "insurancetype")
+names(category_check_list) <- c("is30dayreadmit", "evisit", "mews", "cindex", "gender", 
+                                "race", "religion", "maritalstatus", "insurancetype")
+category_check_tbl <- tibble(variable = c("is30dayreadmit", "evisit", "mews", "cindex", "gender", 
+                                          "race", "religion", "maritalstatus", "insurancetype"),
+                             check_list = category_check_list)
+
+
 #the summary data of potential continous predictors
 df_check %>%
   dplyr::select(-c(is30dayreadmit, evisit, mews, cindex, gender, race, 
@@ -64,10 +69,14 @@ df_check %>%
             max = max(value, na.rm = T))
 
 #we find the following four predictors should be combined
-category_check_list$mews
-category_check_list$cindex
-category_check_list$race
-category_check_list$maritalstatus
+category_check_tbl$check_list[3]             #mews
+category_check_tbl$check_list[4]             #cindex
+category_check_tbl$check_list[6]             #race
+category_check_tbl$check_list[8]             #maritalstatus
+
+#we find some "funny" variable 
+
+
 
 #combine the level we choose
 df$mews<-replace(df$mews, df$mews>5, "immediate action required")
@@ -119,7 +128,7 @@ lm11<-lm(log_los~bmi,data=df)
 lm12<-lm(log_los~mews+temperature+heartrate+respirationrate+bpdiastolic+bpsystolic,data=df)
 lm13<-lm(log_los~mews+is30dayreadmit+cindex+evisit+ageyear+bmi+temperature+heartrate+respirationrate+bpdiastolic+bpsystolic,data=df)
 
-step(lm13, direction='backward')
+#step(lm13, direction='backward')
 
 #select
 best <- function(model, ...) 
