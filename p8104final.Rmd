@@ -74,6 +74,7 @@ df %>%
 category_check_tbl$check_list[3]             #mews
 category_check_tbl$check_list[4]             #cindex
 category_check_tbl$check_list[6]             #race
+category_check_tbl$check_list[7]             #religion
 category_check_tbl$check_list[8]             #maritalstatus
 ```
 
@@ -81,11 +82,14 @@ category_check_tbl$check_list[8]             #maritalstatus
 #combine the level we choose
 df$mews<-replace(df$mews, df$mews>3, "further deterioration/immediate action required")
 df$mews<-replace(df$mews, df$mews<4, "normal/increase caution")
-df$cindex<-replace(df$cindex, df$cindex>5,"severe")
+df$cindex<-replace(df$cindex, df$cindex>4,"severe")
 df$cindex<-replace(df$cindex, df$cindex==3|df$cindex==4,"moderate")
 df$cindex<-replace(df$cindex, df$cindex==2|df$cindex==1,"mild")
 df$cindex<-replace(df$cindex, df$cindex==0,"normal")
 df$race<-replace(df$race, df$race=="Natv Hawaii/Pacf Isl","Other/Multiracial")
+df$religion<-replace(df$religion, 
+                     df$religion=="Angelican"|df$religion=="Hebrew"|df$religion=="Non Denominational"|df$religion=="Mormon",
+                     "Other")
 df$maritalstatus<-replace(df$maritalstatus, df$maritalstatus=="Civil Union","Married")
 #change temperature and bmi
 df[df$temperature < 24] <- NA
@@ -115,7 +119,7 @@ grid.arrange(outcome_nontran, outcome_tran)
 #use log of losdays2
 df <- df %>%
   mutate(log_los=log(losdays2)) 
-
+#Now we have our final data for regression
 ```
 
 #variables who are included
@@ -136,8 +140,10 @@ lm_hear<-lm(log_los~heartrate,data=df)
 lm_res<-lm(log_los~respirationrate,data=df)
 lm_bpd<-lm(log_los~bpdiastolic,data=df)
 lm_bps<-lm(log_los~bpsystolic,data=df)
-# remove gender,race,religion,maritalstatus,insurancetype
-lm_full<-lm(log_los~mews+is30dayreadmit+cindex+evisit+ageyear+bmi+temperature+heartrate+respirationrate+bpdiastolic+bpsystolic,data=df)
+lm_o2<-lm(log_los~o2sat,data=df)
+# remove gender,race, religion, maritalstatus,insurancetype
+# religion should be discussed
+lm_full<-lm(log_los~mews+is30dayreadmit+cindex+evisit+ageyear+bmi+temperature+heartrate+respirationrate+bpdiastolic+bpsystolic+o2sat,data=df)
 
 
 step(lm_full, direction='both', trace = 0)
@@ -154,8 +160,18 @@ best <- function(model, ...)
 }  
 
 # Select the 'best' 1 models of all subsets
-round(best(lm_full, nbest = 1), 4) #remove mews and bmi
-
-
- 
+round(best(lm_full, nbest = 1), 4) #remove mews, bmi and O2sta based on this output
 ```
+
+
+```{r}
+#fit the best model  and give a summary 
+lm_best <- lm(log_los~is30dayreadmit+cindex+evisit+ageyear+temperature+heartrate+respirationrate+bpdiastolic+bpsystolic,data=df)
+summary(lm_best)
+#give the diagnostics plots
+plot(lm_best, which = 1:5)
+#check the the 516th, 595th and 1244th observation
+df[c(516, 595, 1244),]
+rstandard(lm_best)[c(516, 595, 1244)]  #they are outliers in Y
+```
+
