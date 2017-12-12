@@ -149,7 +149,7 @@ lm_o2<-lm(log_los~o2sat,data=df)
 # religion should be discussed
 lm_full<-lm(log_los~mews+is30dayreadmit+cindex+evisit+ageyear+bmi+temperature+heartrate+respirationrate+bpdiastolic+bpsystolic+o2sat,data=df)
 
-# results from stepwise automatic procedure
+# results from stepwise automatic
 summary(step(lm_full, direction='both', trace = 0))
 
 
@@ -219,9 +219,20 @@ bootstrap_results <- boot(df, boot.fn, 10000)
 
 original <- bootstrap_results$t0
 bias <- mean(bootstrap_results$t) - bootstrap_results$t0
-bootstrap_table <- cbind(original, bias)
+std_error <- c(sd(bootstrap_results$t[,1]),
+                sd(bootstrap_results$t[,2]),
+                sd(bootstrap_results$t[,3]),
+                sd(bootstrap_results$t[,4]),
+                sd(bootstrap_results$t[,5]),
+                sd(bootstrap_results$t[,6]),
+                sd(bootstrap_results$t[,7]),
+                sd(bootstrap_results$t[,8]),
+                sd(bootstrap_results$t[,9]),
+                sd(bootstrap_results$t[,10]),
+                sd(bootstrap_results$t[,11]),
+                sd(bootstrap_results$t[,12]))
 
-bootstrap_results
+bootstrap_table <- cbind(original, bias, std_error)
 
 #bias and original coefficients are output
 kable(bootstrap_table)
