@@ -260,6 +260,23 @@ kable(bootstrap_table,
       col.names = c("Original Coefficients", "Bootstrap Coefficients", "Bias", "Standard Error"))
 ```
 
+```{r}
+#Model validation: criteria 
+library(MPV)
+newsummary <- function(model)
+{
+    list('coefs'    = round(t(summary(model)$coef[, 1:2]), 4),
+         'criteria' = cbind('SSE'   = anova(model)["Residuals", "Sum Sq"],
+                            'PRESS' = PRESS(model),
+                            'MSE'   = anova(model)["Residuals", "Mean Sq"],
+                            'Rsq'   = summary(model)$adj.r.squared))
+}
+
+newsummary(lm(log_los ~ is30dayreadmit + cindex + evisit + ageyear + temperature + heartrate + respirationrate + bpdiastolic + bpsystolic,df_rm))
+#PRESS slighter than SSE
+
+```
+
 #predictive capability by cross validation
 ```{r}
 #LOOCV
