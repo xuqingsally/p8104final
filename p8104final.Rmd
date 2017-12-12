@@ -217,7 +217,22 @@ boot.fn <- function(data, index){
 set.seed(1)
 bootstrap_results <- boot(df, boot.fn, 10000)
 
-original <- bootstrap_results$t0
+
+
+original_coeff <- bootstrap_results$t0
+bootstrap_coeff <- c(mean(bootstrap_results$t[,1]),
+          mean(bootstrap_results$t[,2]),
+          mean(bootstrap_results$t[,3]),
+          mean(bootstrap_results$t[,4]),
+          mean(bootstrap_results$t[,5]),
+          mean(bootstrap_results$t[,6]),
+          mean(bootstrap_results$t[,7]),
+          mean(bootstrap_results$t[,8]),
+          mean(bootstrap_results$t[,9]),
+          mean(bootstrap_results$t[,10]),
+          mean(bootstrap_results$t[,11]),
+          mean(bootstrap_results$t[,12]))
+
 bias <- c(mean(bootstrap_results$t[,1]) - bootstrap_results$t0[1],
           mean(bootstrap_results$t[,2]) - bootstrap_results$t0[2],
           mean(bootstrap_results$t[,3]) - bootstrap_results$t0[3],
@@ -244,10 +259,12 @@ std_error <- c(sd(bootstrap_results$t[,1]),
                 sd(bootstrap_results$t[,11]),
                 sd(bootstrap_results$t[,12]))
 
-bootstrap_table <- cbind(original, bias, std_error)
+bootstrap_table <- cbind(original_coeff, bootstrap_coeff, bias, std_error)
 
+colnames <- c("Original Coefficients", "Bootstrap Coefficients", "Bias", "Standard Error")
 #bias and original coefficients are output
-kable(bootstrap_table)
+kable(bootstrap_table, 
+      col.names = c("Original Coefficients", "Bootstrap Coefficients", "Bias", "Standard Error"))
 ```
 
 
