@@ -205,21 +205,21 @@ plot(lm_best_2, which = 1:5)
 
 ## Bootstrapping 
 ```{r}
-train <- sample(length(df), length(df)/2)
+train <- sample(length(df_rm), length(df_rm)/2)
 
 lm_best_train <- lm(log_los ~ is30dayreadmit + cindex + evisit + ageyear + temperature + heartrate + respirationrate + bpdiastolic + bpsystolic,
-                    data = df, 
+                    data = df_rm, 
                     subset = train)
 
 boot.fn <- function(data, index){
 	return(coef(lm(log_los ~ is30dayreadmit + cindex + evisit + ageyear + temperature + heartrate + respirationrate + bpdiastolic + bpsystolic,
-	               data = df, 
+	               data = df_rm, 
 	               subset = index)))
 }
 
 # repeats sampling 10000 times
 set.seed(1)
-bootstrap_results <- boot(df, boot.fn, 10000)
+bootstrap_results <- boot(df_rm, boot.fn, 10000)
 
 
 
@@ -237,18 +237,7 @@ bootstrap_coeff <- c(mean(bootstrap_results$t[,1]),
           mean(bootstrap_results$t[,11]),
           mean(bootstrap_results$t[,12]))
 
-bias <- c(mean(bootstrap_results$t[,1]) - bootstrap_results$t0[1],
-          mean(bootstrap_results$t[,2]) - bootstrap_results$t0[2],
-          mean(bootstrap_results$t[,3]) - bootstrap_results$t0[3],
-          mean(bootstrap_results$t[,4]) - bootstrap_results$t0[4],
-          mean(bootstrap_results$t[,5]) - bootstrap_results$t0[5],
-          mean(bootstrap_results$t[,6]) - bootstrap_results$t0[6],
-          mean(bootstrap_results$t[,7]) - bootstrap_results$t0[7],
-          mean(bootstrap_results$t[,8]) - bootstrap_results$t0[8],
-          mean(bootstrap_results$t[,9]) - bootstrap_results$t0[9],
-          mean(bootstrap_results$t[,10]) - bootstrap_results$t0[10],
-          mean(bootstrap_results$t[,11]) - bootstrap_results$t0[11],
-          mean(bootstrap_results$t[,12]) - bootstrap_results$t0[12])
+bias <- bootstrap_coeff - bootstrap_results$t0
 
 std_error <- c(sd(bootstrap_results$t[,1]),
                 sd(bootstrap_results$t[,2]),
