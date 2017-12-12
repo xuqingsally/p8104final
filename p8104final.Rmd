@@ -22,6 +22,7 @@ library(car)
 library(gridExtra)
 library(knitr)
 library(boot)
+library(cvTools)
 ```
 
 #Clean data
@@ -222,7 +223,6 @@ set.seed(1)
 bootstrap_results <- boot(df_rm, boot.fn, 10000)
 
 
-
 original_coeff <- bootstrap_results$t0
 bootstrap_coeff <- c(mean(bootstrap_results$t[,1]),
           mean(bootstrap_results$t[,2]),
@@ -259,6 +259,34 @@ colnames <- c("Original Coefficients", "Bootstrap Coefficients", "Bias", "Standa
 kable(bootstrap_table, 
       col.names = c("Original Coefficients", "Bootstrap Coefficients", "Bias", "Standard Error"))
 ```
+
+#predictive capability by cross validation
+```{r}
+#LOOCV
+#use a glm function to fit the lm model since we must use cv.glm to do LOOCV
+glm_best <- glm(log_los~is30dayreadmit+cindex+evisit+ageyear+temperature+
+       heartrate+respirationrate+bpdiastolic+bpsystolic, data = df_rm)
+#LOOCV and give the MSE
+cv_err <- cv.glm(df_rm, glm_best)
+cv_err$delta
+#the MSE in our final model
+anova(lm_best_2)$`Mean Sq`[10]
+#we can find that the MSE in LOOCV is just slighter larger than the MSE in our final model
+#Then we state that our model can be generalized well and have good predictive capability
+
+#K-fold CV
+#set up folds for cross-validation
+folds <- cvFolds(nrow(df_rm), K = 10, R = 40)
+# perform cross-validation for an LS regression model
+cvFitLm <- cvLm(lm_best_2, cost = rtmspe, folds = folds, trim = 0.1)
+#check the CV in this cross validation and the MSE in our final model and we find that they are close
+cvFitLm
+#Then we state that our model can be generalized well and have good predictive capability
+```
+
+
+
+
 
 
 
