@@ -18,6 +18,7 @@ library(leaps)
 library(car)
 library(gridExtra)
 library(knitr)
+library(boot)
 ```
 
 #Clean data
