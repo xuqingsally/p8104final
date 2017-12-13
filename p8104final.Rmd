@@ -114,6 +114,8 @@ df$respirationrate[df$respirationrate > 50] <- NA
 #sum(is.na(df[,13])) insurancetype 33
 #sum(is.na(df[,14])) bmi 725
 
+# "bpsystolic"     "o2sat"           "temperature"     "heartrate"       "respirationrate" "bpdiastolic"     "num_visit"      all have a few (<5) NAs
+# impute these few ones by mean
 
 # df <- df %>% na.omit()
 ```
@@ -157,9 +159,9 @@ lm_res<-lm(log_los~respirationrate,data=df)
 lm_bpd<-lm(log_los~bpdiastolic,data=df)
 lm_bps<-lm(log_los~bpsystolic,data=df)
 lm_o2<-lm(log_los~o2sat,data=df)
-# remove gender,race, religion, maritalstatus,insurancetype
-# religion should be discussed
-lm_full<-lm(log_los~mews+is30dayreadmit+cindex+evisit+ageyear+bmi+temperature+heartrate+respirationrate+bpdiastolic+bpsystolic+o2sat,data=df)
+# remove gender
+#remove bmi - too many NAs
+lm_full<-lm(log_los~mews+is30dayreadmit+cindex+evisit+ageyear+temperature+heartrate+respirationrate+bpdiastolic+bpsystolic+o2sat,data=df)
 
 # results from stepwise automatic
 summary(step(lm_full, direction='both', trace = 0))
@@ -309,8 +311,18 @@ cvFitLm
 ```
 
 
+Final model Table
+```{r, eval = FALSE}
+variable_names <- c()
+coeff <- c()
+std_err <- c()
 
 
+conf_ints <- data.frame(confint(lm_best))
+conf_ints  <- paste(round(conf_ints [,1], digits = 4), 
+                     round(conf_ints [,2], digits = 4), 
+                     sep=", ")
+model_table <- cbind(variable_names, coeff, std_err, conf_ints)
 
-
-
+kable(model_table)
+```
