@@ -100,15 +100,22 @@ df$religion<-replace(df$religion,
                      "Other")
 df$maritalstatus<-replace(df$maritalstatus, df$maritalstatus=="Civil Union","Married")
 #change temperature and bmi
-df[df$temperature < 24] <- NA
-df[df$temperature > 47] <- NA
-df[df$bmi < 7] <- NA
-df[df$bmi > 50] <- NA
-df[df$heartrate > 220] <- NA
-df[df$o2sat > 200] <- NA
-df[df$respirationrate > 50] <- NA
+df$temperature[df$temperature < 24] <- NA
+df$temperature[df$temperature > 47] <- NA
+df$bmi[df$bmi < 7] <- NA
+df$bmi[df$bmi > 50] <- NA
+df$heartrate[df$heartrate > 220] <- NA
+df$o2sat[df$o2sat > 200] <- NA
+df$respirationrate[df$respirationrate > 50] <- NA
 #omit the missing observations
-df <- df %>% na.omit()
+
+#sum(is.na(df[,5]))  MEWS 163
+#sum(is.na(df[,12])) maritalstatus 76
+#sum(is.na(df[,13])) insurancetype 33
+#sum(is.na(df[,14])) bmi 725
+
+
+# df <- df %>% na.omit()
 ```
 
 #transformation
@@ -139,12 +146,12 @@ lm_cindex<-lm(log_los~cindex,data=df)
 lm_evisit<-lm(log_los~evisit,data=df)
 lm_ageyear<-lm(log_los~ageyear,data=df)
 lm_gender<-lm(log_los~factor(gender),data=df) # not sig 
-lm_race<-lm(log_los~factor(race),data=df) #not sig
-lm_religion<-lm(log_los~factor(religion),data=df) #not sig
-lm_maritalstatus<-lm(log_los~factor(maritalstatus),data=df) #not sig
-lm_insurancetype<-lm(log_los~factor(insurancetype),data=df) #not sig?
+lm_race<-lm(log_los~factor(race),data=df) 
+lm_religion<-lm(log_los~factor(religion),data=df) 
+lm_maritalstatus<-lm(log_los~factor(maritalstatus),data=df) 
+lm_insurancetype<-lm(log_los~factor(insurancetype),data=df) 
 lm_bmi<-lm(log_los~bmi,data=df)
-lm_tem<-lm(log_los~temperature,data=df) #not sig but pvalue is 0.09, still remain
+lm_tem<-lm(log_los~temperature,data=df) 
 lm_hear<-lm(log_los~heartrate,data=df)
 lm_res<-lm(log_los~respirationrate,data=df)
 lm_bpd<-lm(log_los~bpdiastolic,data=df)
