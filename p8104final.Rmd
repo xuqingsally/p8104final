@@ -197,9 +197,9 @@ summary(lm_best)
 #give the diagnostics plots
 par(mfrow=c(2,2))
 plot(lm_best, which = 1:5)
-#check the the 516th, 595th and 1244th observation(patientid:477165, 558208, 1680385)
+#check the the 1607th, 768th, 1478th observation(patientid:477165, 558208, 1680385)
 df[c(1607, 768, 1478),]
-rstandard(lm_best)[c(1607, 768, 1478)]  #they are outliers in Y
+rstandard(lm_best)[c(1607, 768, 1478)]  #1607th, 1478th are outliers in Y, 768th is not an outlier
 
 
 #first from the residuals vs leverage plot, we find that they are not outliers in X
@@ -211,11 +211,42 @@ rstandard(lm_best)[c(1607, 768, 1478)]  #they are outliers in Y, but their |ri|s
 outlier_y <- which(abs(rstandard(lm_best)) > 2.5)
 
 outliers_df <- df[which(abs(rstandard(lm_best)) > 2.5),]
+
+#now we check what happens in the outliers in Y
+tbl_is30dayreadmit <- 
+  bind_rows(table(df$is30dayreadmit)-table(outliers_df$is30dayreadmit),
+            table(outliers_df$is30dayreadmit)) %>%
+  mutate(data = c("data without outliers", "outlires")) %>%
+  dplyr::select(data, everything())
+chisq.test(tbl_is30dayreadmit[,-1])
+
+tbl_cindex <- 
+  bind_rows(table(df$cindex)-table(outliers_df$cindex),
+            table(outliers_df$cindex)) %>%
+  mutate(data = c("data without outliers", "outlires")) %>%
+  dplyr::select(data, everything())
+chisq.test(tbl_cindex[,-1])
+
+tbl_evisit <- 
+  bind_rows(table(df$evisit)-table(outliers_df$evisit),
+            table(outliers_df$evisit)) %>%
+  mutate(data = c("data without outliers", "outlires")) %>%
+  dplyr::select(data, everything())
+chisq.test(tbl_evisit[,-1])
+
+tbl_insurancetype <- 
+  bind_rows(table(df$insurancetype)-table(outliers_df$insurancetype),
+            table(outliers_df$insurancetype)) %>%
+  mutate(data = c("data without outliers", "outlires")) %>%
+  dplyr::select(data, everything())
+chisq.test(tbl_insurancetype[,-1])
+
 #now we fit the model these points including the three influential cases
 df_rm <- df[-outlier_y,]
 lm_best_2 <- df_rm %>%
-  lm(log_los~is30dayreadmit+cindex+evisit+ageyear+temperature+
-       heartrate+respirationrate+bpdiastolic+bpsystolic,data = .)
+  lm(log_los~ is30dayreadmit + cindex + evisit + ageyear + 
+    temperature + heartrate + respirationrate + bpdiastolic + 
+    bpsystolic + insurancetype, data = .)
 summary(lm_best_2)
 plot(lm_best_2, which = 1:5)
 #we find that the QQplot become better and R^2 become larger. So we decide to remove the outliers in Y
