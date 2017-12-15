@@ -253,91 +253,18 @@ plot(lm_best_2, which = 1:5)
 ```
 
 
-
-## Bootstrapping 
-```{r}
-train <- sample(length(df_rm), length(df_rm)/2)
-
-lm_best_train <- lm(log_los ~ is30dayreadmit + cindex + evisit + ageyear + temperature + heartrate + respirationrate + bpdiastolic + bpsystolic,
-                    data = df_rm, 
-                    subset = train)
-
-boot.fn <- function(data, index){
-	return(coef(lm(log_los ~ is30dayreadmit + cindex + evisit + ageyear + temperature + heartrate + respirationrate + bpdiastolic + bpsystolic,
-	               data = df_rm, 
-	               subset = index)))
-}
-
-# repeats sampling 10000 times
-set.seed(1)
-bootstrap_results <- boot(df_rm, boot.fn, 10000)
-
-
-original_coeff <- bootstrap_results$t0
-bootstrap_coeff <- c(mean(bootstrap_results$t[,1]),
-          mean(bootstrap_results$t[,2]),
-          mean(bootstrap_results$t[,3]),
-          mean(bootstrap_results$t[,4]),
-          mean(bootstrap_results$t[,5]),
-          mean(bootstrap_results$t[,6]),
-          mean(bootstrap_results$t[,7]),
-          mean(bootstrap_results$t[,8]),
-          mean(bootstrap_results$t[,9]),
-          mean(bootstrap_results$t[,10]),
-          mean(bootstrap_results$t[,11]),
-          mean(bootstrap_results$t[,12]))
-
-bias <- bootstrap_coeff - bootstrap_results$t0
-
-std_error <- c(sd(bootstrap_results$t[,1]),
-                sd(bootstrap_results$t[,2]),
-                sd(bootstrap_results$t[,3]),
-                sd(bootstrap_results$t[,4]),
-                sd(bootstrap_results$t[,5]),
-                sd(bootstrap_results$t[,6]),
-                sd(bootstrap_results$t[,7]),
-                sd(bootstrap_results$t[,8]),
-                sd(bootstrap_results$t[,9]),
-                sd(bootstrap_results$t[,10]),
-                sd(bootstrap_results$t[,11]),
-                sd(bootstrap_results$t[,12]))
-
-bootstrap_table <- cbind(original_coeff, bootstrap_coeff, bias, std_error)
-
-colnames <- c("Original Coefficients", "Bootstrap Coefficients", "Bias", "Standard Error")
-#bias and original coefficients are output
-kable(bootstrap_table, 
-      col.names = c("Original Coefficients", "Bootstrap Coefficients", "Bias", "Standard Error"))
-```
-
-```{r}
-#Model validation: criteria 
-library(MPV)
-newsummary <- function(model)
-{
-    list('coefs'    = round(t(summary(model)$coef[, 1:2]), 4),
-         'criteria' = cbind('SSE'   = anova(model)["Residuals", "Sum Sq"],
-                            'PRESS' = PRESS(model),
-                            'MSE'   = anova(model)["Residuals", "Mean Sq"],
-                            'Rsq'   = summary(model)$adj.r.squared))
-}
-
-newsummary(lm(log_los ~ is30dayreadmit + cindex + evisit + ageyear + temperature + heartrate + respirationrate + bpdiastolic + bpsystolic,df_rm))
-#PRESS slighter than SSE
-
-```
-
 #predictive capability by cross validation
 ```{r}
 #LOOCV
 #use a glm function to fit the lm model since we must use cv.glm to do LOOCV
-glm_best <- glm(log_los~is30dayreadmit+cindex+evisit+ageyear+temperature+
-       heartrate+respirationrate+bpdiastolic+bpsystolic, data = df_rm)
+glm_best <- glm(log_los~ is30dayreadmit + cindex + evisit + ageyear + 
+    temperature + heartrate + respirationrate + bpdiastolic + 
+    bpsystolic + insurancetype, data = df_rm)
 #LOOCV and give the MSE
 cv_err <- cv.glm(df_rm, glm_best)
 cv_err$delta
 #the MSE in our final model
-anova(lm_best_2)$`Mean Sq`[10]
+anova(lm_best_2)$`Mean Sq`[11]
 #we can find that the MSE in LOOCV is just slighter larger than the MSE in our final model
 #Then we state that our model can be generalized well and have good predictive capability
 
@@ -349,21 +276,38 @@ cvFitLm <- cvLm(lm_best_2, cost = rtmspe, folds = folds, trim = 0.1)
 #check the CV in this cross validation and the MSE in our final model and we find that they are close
 cvFitLm
 #Then we state that our model can be generalized well and have good predictive capability
+
+#combine the result together
+tibble(term = c("best model we choose", "N-fold", "10-fold"), MSE = c(anova(lm_best_2)$`Mean Sq`[11], cv_err$delta[1], cvFitLm$cv))
 ```
 
 
 Final model Table
-```{r, eval = FALSE}
-variable_names <- c()
-coeff <- c()
-std_err <- c()
+```{r, echo=FALSE}
+variable_names <- c("Intercept", "
+                    Is 30 Day Readmit or Not", 
+                    "Charlson comorbidity index (moderate)",  
+                    "Charlson comorbidity index (normal)",  
+                    "Charlson comorbidity index (severe)", 
+                    "Emergency Dept Visits",
+                    "Age",
+                    "Temperature",
+                    "Heart Rate",
+                    "Respiration Rate",
+                    "Diastolic BP",
+                    "Systolic BP",
+                    "Insurance Type (Medicare)",
+                    "Insurance Type (Private)")
+coeff <- summary(lm_best_2)$coeff[,1]
+std_err <- summary(lm_best_2)$coeff[,2]
 
 
-conf_ints <- data.frame(confint(lm_best))
+conf_ints <- data.frame(confint(lm_best_2))
 conf_ints  <- paste(round(conf_ints [,1], digits = 4), 
                      round(conf_ints [,2], digits = 4), 
                      sep=", ")
 model_table <- cbind(variable_names, coeff, std_err, conf_ints)
 
+row.names(model_table) <- c()
 kable(model_table)
 ```
