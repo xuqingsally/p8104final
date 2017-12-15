@@ -219,6 +219,31 @@ lm_best_2 <- df_rm %>%
 summary(lm_best_2)
 plot(lm_best_2, which = 1:5)
 #we find that the QQplot become better and R^2 become larger. So we decide to remove the outliers in Y
+
+
+#test whether outlier is different with other data 
+#use t-test to test the difference
+t_function<-function(x,y){
+  out<-x
+rm<-y
+p_value<-t.test(out,rm, var.equal=FALSE, paired=FALSE)[3]
+return(p_value)
+}
+t_function(outliers_df$evisit,df_rm$evisit)
+t_function(outliers_df$ageyear,df_rm$ageyear) #different,p-value=0.00033
+t_function(outliers_df$bpsystolic,df_rm$bpsystolic)
+t_function(outliers_df$o2sat ,df_rm$o2sat)
+t_function(outliers_df$temperature,df_rm$temperature)
+t_function(outliers_df$respirationrate,df_rm$respirationrate)
+t_function(outliers_df$heartrate,df_rm$heartrate)
+t_function(outliers_df$bpdiastolic,df_rm$bpdiastolic)
+
+tibble(age=df_rm$ageyear,data=rep("exclude outlier",length(df_rm$ageyear))) %>%
+  bind_rows(tibble(age=outliers_df$ageyear,data=rep("outlier",length(outliers_df$ageyear))) ) %>%
+  group_by(data) %>%
+  ggplot(aes(x=data,y=age),group=data)+
+  geom_boxplot() +
+  labs(title="Distribution of age in outliers and other")
 ```
 
 
