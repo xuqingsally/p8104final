@@ -109,6 +109,7 @@ df$o2sat[df$o2sat > 200] <- NA
 df$respirationrate[df$respirationrate > 50] <- NA
 #omit the missing observations
 
+# NAs 
 #sum(is.na(df[,5]))  MEWS 163
 #sum(is.na(df[,12])) maritalstatus 76
 #sum(is.na(df[,13])) insurancetype 33
@@ -275,6 +276,14 @@ tibble(age=df_rm$ageyear,data=rep("exclude outlier",length(df_rm$ageyear))) %>%
   ggplot(aes(x=data,y=age),group=data)+
   geom_boxplot() +
   labs(title="Distribution of age in outliers and other")
+
+tibble(log_los=df_rm$log_los,data=rep("exclude outlier",length(df_rm$log_los))) %>%
+  bind_rows(tibble(log_los=outliers_df$log_los,data=rep("outlier",length(outliers_df$log_los))) ) %>%
+  group_by(data) %>%
+  ggplot(aes(x=data,y=exp(log_los)),group=data)+
+  geom_boxplot() +
+  labs(title="Distribution of Length of Stay in outliers and other")
+
 ```
 
 
@@ -331,8 +340,9 @@ conf_ints <- data.frame(confint(lm_best_2))
 conf_ints  <- paste(round(conf_ints [,1], digits = 4), 
                      round(conf_ints [,2], digits = 4), 
                      sep=", ")
-model_table <- cbind(variable_names, coeff, std_err, conf_ints)
+model_table <- cbind(variable_names, round(coeff, digits = 4), round(std_err, digits = 4), conf_ints)
 
 row.names(model_table) <- c()
-kable(model_table)
+
+kable(model_table, col.names =  c("Variable", "Coefficients", "Standard Error", "95% Conf Intervals"))
 ```
